@@ -1,0 +1,45 @@
+version: "3.3"
+
+services:
+    nginx:
+        build:
+            context: .
+            dockerfile: docker/Nginx.Dockerfile
+
+        ports:
+            - 90:90
+            - 443:443
+        links:
+            - fpm
+        volumes:
+            - ./:/var/www/laravel
+    fpm:
+        build:
+            context: .
+            dockerfile: docker/Fpm.Dockerfile
+        ports:
+            - 9000:9000
+        environment:
+            PHP_IDE_CONFIG: "serverName=Docker"
+            XDEBUG_SESSION: "docker-server"
+        volumes:
+            - ./:/var/www/laravel
+            - ./docker/conf/php.ini:/usr/local/etc/php/php.ini
+        links:
+            - postgres
+    postgres:
+        image: postgres
+        restart: always
+        ports:
+            - '127.0.0.1:5436:5432'
+        environment:
+            POSTGRES_DB: "${DB_DATABASE}"
+            POSTGRES_USER: "${DB_USERNAME}"
+            POSTGRES_PASSWORD: "${DB_PASSWORD}"
+        volumes:
+             - ./docker/init:/docker-entrypoint-initdb.d
+             - postgres_pgdb:/var/lib/postgresql/data
+volumes:
+    postgres_pgdb:
+
+
